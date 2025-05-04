@@ -1,7 +1,7 @@
 {
   "uuid": "jaja-n8n-command@jaja.goldenstiv",
-  "name": "JAJA N8N Command",
-  "description": "Ввод пользовательских команд для передачи на n8n webhook через интерфейс GNOME.",
+  "name": "n8n Command Input",
+  "description": "Интерфейс командной строки для n8n через GNOME панель",
   "version": 1,
   "shell-version": ["45", "46", "47", "48"]
 }
