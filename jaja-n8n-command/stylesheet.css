@@ -1,0 +1,13 @@
+.jaja-entry {
+  padding: 4px;
+  min-width: 200px;
+  margin-right: 8px;
+  border-radius: 6px;
+}
+
+.jaja-button {
+  background-color: #3584e4;
+  color: white;
+  border-radius: 6px;
+  padding: 4px 12px;
+}
