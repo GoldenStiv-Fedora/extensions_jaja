@@ -6,25 +6,22 @@ import PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 const Extension = class {
-    constructor(meta) {
-        this._meta = meta;
+    constructor(metadata) {
+        this._meta = metadata;
         this._indicator = null;
     }
 
     enable() {
-        this._indicator = new PanelMenu.Button(0.0, 'n8n Command Input', false);
+        this._indicator = new PanelMenu.Button(0.0, 'n8n Command Entry', false);
 
-        // Иконка
-        const iconPath = `${this._meta.path}/icons/icon-symbolic.svg`;
         const icon = new St.Icon({
-            gicon: Gio.icon_new_for_string(iconPath),
+            gicon: Gio.icon_new_for_string(`${this._meta.path}/icons.svg`),
             style_class: 'system-status-icon',
         });
 
         this._indicator.add_child(icon);
 
-        // Меню
-        const menuItem = new PopupMenu.PopupMenuItem('Открыть n8n-интерфейс команд');
+        const menuItem = new PopupMenu.PopupMenuItem('Ввести команду n8n');
 
         menuItem.connect('activate', () => {
             try {
@@ -33,12 +30,12 @@ const Extension = class {
                     Gio.SubprocessFlags.NONE
                 );
             } catch (e) {
-                console.error('Ошибка при открытии n8n-интерфейса:', e);
+                console.error('Ошибка при запуске команды:', e);
             }
         });
 
         this._indicator.menu.addMenuItem(menuItem);
-        Main.panel.addToStatusArea('n8n-command-indicator', this._indicator);
+        Main.panel.addToStatusArea('n8n-command-entry', this._indicator);
     }
 
     disable() {
