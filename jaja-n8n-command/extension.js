@@ -1,26 +1,29 @@
 // extension.js
-import * as St from 'gi://St';
-import * as Gio from 'gi://Gio';
-import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
-import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
-import * as ExtensionUtils from 'resource:///org/gnome/shell/extensions/extension.js';
-
-const Me = ExtensionUtils.getCurrentExtension();
-
-let indicator = null;
+import St from 'gi://St';
+import Gio from 'gi://Gio';
+import Main from 'resource:///org/gnome/shell/ui/main.js';
+import PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+import PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 const Extension = class {
-    enable() {
-        indicator = new PanelMenu.Button(0.0, 'n8n Command Input', false);
+    constructor(meta) {
+        this._meta = meta;
+        this._indicator = null;
+    }
 
+    enable() {
+        this._indicator = new PanelMenu.Button(0.0, 'n8n Command Input', false);
+
+        // Иконка
+        const iconPath = `${this._meta.path}/icons/icon-symbolic.svg`;
         const icon = new St.Icon({
-            gicon: Gio.icon_new_for_string(`${Me.path}/icons/icon-symbolic.svg`),
+            gicon: Gio.icon_new_for_string(iconPath),
             style_class: 'system-status-icon',
         });
 
-        indicator.add_child(icon);
+        this._indicator.add_child(icon);
 
+        // Меню
         const menuItem = new PopupMenu.PopupMenuItem('Открыть n8n-интерфейс команд');
 
         menuItem.connect('activate', () => {
@@ -30,23 +33,19 @@ const Extension = class {
                     Gio.SubprocessFlags.NONE
                 );
             } catch (e) {
-                logError(e, 'Ошибка запуска интерфейса команд');
+                console.error('Ошибка при открытии n8n-интерфейса:', e);
             }
         });
 
-        indicator.menu.addMenuItem(menuItem);
-        Main.panel.addToStatusArea('n8n-command-indicator', indicator);
+        this._indicator.menu.addMenuItem(menuItem);
+        Main.panel.addToStatusArea('n8n-command-indicator', this._indicator);
     }
 
     disable() {
-        if (indicator) {
-            indicator.destroy();
-            indicator = null;
+        if (this._indicator) {
+            this._indicator.destroy();
+            this._indicator = null;
         }
-    }
-
-    init() {
-        // инициализация, если нужно
     }
 };
 
