@@ -1,8 +1,9 @@
 {
   "uuid": "jaja-n8n-command@jaja.goldenstiv",
-  "name": "n8n Command Entry",
-  "description": "Расширение для отправки команд на n8n через GNOME Shell",
-  "version": 1,
+  "name": "JaJa N8N Command",
+  "description": "Командная панель для отправки команд в N8N",
   "shell-version": ["45", "46", "47", "48"],
-  "url": "https://github.com/GoldenStiv-Fedora/extensions_jaja/jaja-n8n-command"
+  "version": 1,
+  "url": "https://github.com/GoldenStiv-Fedora/extensions_jaja",
+  "settings-schema": "org.gnome.shell.extensions.jaja-n8n-command"
 }
