@@ -1,10 +1,14 @@
 // extension.js
 
-import { St, Gio, GLib } from 'resource:///org/gnome/shell/ui/main.js';
+import * as St from 'gi://St';
+import * as Gio from 'gi://Gio';
+import * as GLib from 'gi://GLib';
+
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
+
 
 let jajaIndicator;
 
