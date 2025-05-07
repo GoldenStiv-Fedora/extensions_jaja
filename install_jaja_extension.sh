@@ -1,4 +1,6 @@
 #!/bin/bash
+#Запуск: chmod +x install_jaja_extension.sh && ./install_jaja_extension.sh
+ 
 
 # === ПАРАМЕТРЫ ===
 EXTENSION_ID="jaja-n8n-command@jaja.goldenstiv"
