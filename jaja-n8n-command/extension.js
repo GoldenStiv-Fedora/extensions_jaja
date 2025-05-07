@@ -14,10 +14,12 @@ const Extension = class {
     enable() {
         this._indicator = new PanelMenu.Button(0.0, 'n8n Command Entry', false);
 
-        const icon = new St.Icon({
-            gicon: Gio.icon_new_for_string(`${this._meta.path}/icons.svg`),
+        const iconFile = Gio.File.new_for_path(`${this._meta.path}/icon.svg`);
+            const icon = new St.Icon({
+            gicon: new Gio.FileIcon({ file: iconFile }),
             style_class: 'system-status-icon',
         });
+
 
         this._indicator.add_child(icon);
 
