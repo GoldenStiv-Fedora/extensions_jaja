@@ -1,8 +1,11 @@
 // 🧠 JAJA N8N COMMAND EXTENSION v1.3
 // ФАЙЛ: extension.js
-// ОПИСАНИЕ:
-// Основной файл расширения GNOME Shell для работы с n8n.
-// Реализует: отправку команд, историю, уведомления.
+// НАЗНАЧЕНИЕ: Основной файл расширения GNOME Shell для работы с n8n
+// ОСОБЕННОСТИ:
+// - Отправка команд в n8n через вебхук
+// - История последних 5 команд
+// - Настраиваемый интерфейс
+// - Уведомления о выполнении команд
 
 import St from 'gi://St';
 import Gio from 'gi://Gio';
@@ -13,14 +16,22 @@ import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 export default class Extension {
+    /**
+     * Конструктор класса расширения
+     * @param {object} metadata - Метаданные расширения
+     */
     constructor(metadata) {
-        this._meta = metadata;
-        this._indicator = null;
-        this._settings = null;
-        this._history = [];
-        this._entry = null;
+        this._meta = metadata;       // Метаданные расширения
+        this._indicator = null;      // Индикатор на панели
+        this._settings = null;       // Настройки расширения
+        this._history = [];         // История команд (максимум 5)
+        this._entry = null;          // Поле ввода команды
     }
 
+    /**
+     * Загрузка настроек из GSettings
+     * @returns {boolean} Успешность загрузки настроек
+     */
     _loadSettings() {
         try {
             const schemaDir = Gio.File.new_for_path(`${this._meta.path}/schemas`);
@@ -38,15 +49,19 @@ export default class Extension {
         }
     }
 
+    /**
+     * Включение расширения
+     */
     enable() {
         if (!this._loadSettings()) {
             console.error('Не удалось загрузить настройки, расширение отключено');
             return;
         }
 
+        // Создание индикатора на панели
         this._indicator = new PanelMenu.Button(0.0, 'n8n Command', false);
         
-        // Установка иконки (только connect.png)
+        // Установка иконки
         const iconFile = Gio.File.new_for_path(`${this._meta.path}/connect.png`);
         const icon = new St.Icon({
             gicon: new Gio.FileIcon({ file: iconFile }),
@@ -55,9 +70,11 @@ export default class Extension {
         });
         this._indicator.add_child(icon);
 
+        // Создание контейнера для элементов интерфейса
         const container = new PopupMenu.PopupBaseMenuItem({ reactive: false });
         const box = new St.BoxLayout({ vertical: false, style_class: 'n8n-input-box' });
 
+        // Поле ввода команды
         this._entry = new St.Entry({
             style_class: 'n8n-command-entry',
             hint_text: 'Введите команду для n8n',
@@ -65,6 +82,7 @@ export default class Extension {
             x_expand: true
         });
 
+        // Кнопка отправки
         const sendButton = new St.Button({ 
             label: 'Отправить', 
             style_class: 'n8n-send-button' 
@@ -72,9 +90,11 @@ export default class Extension {
         this._updateButtonStyle(sendButton);
         this._settings.connect('changed::button-color', () => this._updateButtonStyle(sendButton));
 
+        // Меню истории команд
         const historyMenu = new PopupMenu.PopupSubMenuMenuItem('История команд (5)');
         this._updateHistoryMenu(historyMenu);
 
+        // Сборка интерфейса
         box.add_child(this._entry);
         box.add_child(sendButton);
         container.actor.add_child(box);
@@ -82,6 +102,7 @@ export default class Extension {
         this._indicator.menu.addMenuItem(historyMenu);
         Main.panel.addToStatusArea(this._meta.uuid, this._indicator);
 
+        // Обработчики событий
         sendButton.connect('clicked', () => this._sendCommand(this._entry));
         this._entry.clutter_text.connect('key-press-event', (_, event) => {
             const key = event.get_key_symbol();
@@ -94,6 +115,10 @@ export default class Extension {
         });
     }
 
+    /**
+     * Обновление стиля кнопки отправки
+     * @param {St.Button} button - Кнопка для стилизации
+     */
     _updateButtonStyle(button) {
         const color = this._settings.get_string('button-color');
         button.style = `
@@ -105,6 +130,10 @@ export default class Extension {
         `;
     }
 
+    /**
+     * Добавление команды в историю
+     * @param {string} cmd - Команда для добавления в историю
+     */
     _addToHistory(cmd) {
         if (this._history.length >= 5) {
             this._history.shift();
@@ -112,6 +141,10 @@ export default class Extension {
         this._history.push(cmd);
     }
 
+    /**
+     * Обновление меню истории команд
+     * @param {PopupMenu.PopupSubMenuMenuItem} menu - Меню для обновления
+     */
     _updateHistoryMenu(menu) {
         menu.menu.removeAll();
         this._history.slice().reverse().forEach(cmd => {
@@ -125,21 +158,27 @@ export default class Extension {
         });
     }
 
+    /**
+     * Отправка команды в n8n
+     * @param {St.Entry} entry - Поле ввода команды
+     */
     async _sendCommand(entry) {
         const text = entry.get_text().trim();
         if (!text) return;
 
+        // Уведомление о отправке (если включено в настройках)
         const showNotify = this._settings.get_boolean('show-send-notify');
         if (showNotify) {
             Main.notify('JAJA n8n', `Команда отправлена: ${text}`);
         }
 
+        // Добавление в историю и обновление меню
         this._addToHistory(text);
         this._updateHistoryMenu(this._indicator.menu._getMenuItems()[1]);
 
+        // Формирование и отправка команды curl
         const url = this._settings.get_string('n8n-url');
-        // Исправление для команд с пробелами - используем JSON.stringify
-        const escaped = JSON.stringify(text).slice(1, -1);
+        const escaped = JSON.stringify(text).slice(1, -1); // Экранирование для команд с пробелами
         const cmd = `curl -s -X POST -H 'Content-Type: application/json' -d '{"cmd":"${escaped}"}' '${url}'`;
 
         try {
@@ -153,6 +192,11 @@ export default class Extension {
         }
     }
 
+    /**
+     * Выполнение shell-команды
+     * @param {string} command - Команда для выполнения
+     * @returns {Promise<[boolean, string]>} Результат выполнения [успех, вывод]
+     */
     _executeCommand(command) {
         return new Promise((resolve) => {
             const proc = Gio.Subprocess.new(
@@ -171,6 +215,9 @@ export default class Extension {
         });
     }
 
+    /**
+     * Отключение расширения
+     */
     disable() {
         if (this._indicator) {
             this._indicator.destroy();
