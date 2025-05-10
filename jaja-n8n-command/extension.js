@@ -1,4 +1,4 @@
-// 🧠 JAJA N8N COMMAND EXTENSION v1.2
+// 🧠 JAJA N8N COMMAND EXTENSION v1.3
 // ФАЙЛ: extension.js
 // ОПИСАНИЕ:
 // Основной файл расширения GNOME Shell для работы с n8n.
@@ -21,7 +21,6 @@ export default class Extension {
         this._entry = null;
     }
 
-    // Загрузка настроек из GSettings
     _loadSettings() {
         try {
             const schemaDir = Gio.File.new_for_path(`${this._meta.path}/schemas`);
@@ -39,7 +38,6 @@ export default class Extension {
         }
     }
 
-    // Инициализация и запуск расширения
     enable() {
         if (!this._loadSettings()) {
             console.error('Не удалось загрузить настройки, расширение отключено');
@@ -96,7 +94,6 @@ export default class Extension {
         });
     }
 
-    // Обновление стиля кнопки
     _updateButtonStyle(button) {
         const color = this._settings.get_string('button-color');
         button.style = `
@@ -108,7 +105,6 @@ export default class Extension {
         `;
     }
 
-    // Добавление команды в историю (максимум 5)
     _addToHistory(cmd) {
         if (this._history.length >= 5) {
             this._history.shift();
@@ -116,7 +112,6 @@ export default class Extension {
         this._history.push(cmd);
     }
 
-    // Обновление меню истории
     _updateHistoryMenu(menu) {
         menu.menu.removeAll();
         this._history.slice().reverse().forEach(cmd => {
@@ -130,7 +125,6 @@ export default class Extension {
         });
     }
 
-    // Отправка команды в n8n
     async _sendCommand(entry) {
         const text = entry.get_text().trim();
         if (!text) return;
@@ -144,29 +138,32 @@ export default class Extension {
         this._updateHistoryMenu(this._indicator.menu._getMenuItems()[1]);
 
         const url = this._settings.get_string('n8n-url');
-        const escaped = GLib.shell_quote(text);
+        // Исправление для команд с пробелами - используем JSON.stringify
+        const escaped = JSON.stringify(text).slice(1, -1);
         const cmd = `curl -s -X POST -H 'Content-Type: application/json' -d '{"cmd":"${escaped}"}' '${url}'`;
 
         try {
             const [success, output] = await this._executeCommand(cmd);
-            if (!success) Main.notifyError('JAJA n8n', output);
+            if (!success) {
+                Main.notifyError('JAJA n8n', output || 'Ошибка при выполнении команды');
+            }
             entry.set_text('');
         } catch (e) {
-            Main.notifyError('JAJA n8n', e.message);
+            Main.notifyError('JAJA n8n', e.message || 'Неизвестная ошибка');
         }
     }
 
-    // Выполнение shell-команд (исправленная ошибка proc.get_success)
     _executeCommand(command) {
         return new Promise((resolve) => {
             const proc = Gio.Subprocess.new(
                 ['bash', '-c', command],
                 Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE
             );
-            proc.communicate_utf8_async(null, null, (proc, res) => {
+            proc.wait_async(null, (proc, res) => {
                 try {
-                    const [, out, err] = proc.communicate_utf8_finish(res);
-                    resolve([proc.get_successful(), out.trim() || err.trim()]);
+                    const success = proc.wait_finish(res);
+                    const [status, stdout, stderr] = proc.communicate_utf8(null, null);
+                    resolve([success, stdout || stderr]);
                 } catch (e) {
                     resolve([false, e.message]);
                 }
@@ -174,7 +171,6 @@ export default class Extension {
         });
     }
 
-    // Отключение расширения
     disable() {
         if (this._indicator) {
             this._indicator.destroy();
