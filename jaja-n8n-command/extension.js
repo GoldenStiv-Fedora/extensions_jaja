@@ -24,7 +24,7 @@ export default class Extension {
         this._meta = metadata;       // Метаданные расширения
         this._indicator = null;      // Индикатор на панели
         this._settings = null;       // Настройки расширения
-        this._history = [];         // История команд (максимум 5)
+        this._history = [];         // История команд (максимум 10)
         this._entry = null;          // Поле ввода команды
     }
 
@@ -91,7 +91,7 @@ export default class Extension {
         this._settings.connect('changed::button-color', () => this._updateButtonStyle(sendButton));
 
         // Меню истории команд
-        const historyMenu = new PopupMenu.PopupSubMenuMenuItem('История команд (5)');
+        const historyMenu = new PopupMenu.PopupSubMenuMenuItem('История команд');
         this._updateHistoryMenu(historyMenu);
 
         // Сборка интерфейса
@@ -135,7 +135,7 @@ export default class Extension {
      * @param {string} cmd - Команда для добавления в историю
      */
     _addToHistory(cmd) {
-        if (this._history.length >= 5) {
+        if (this._history.length >= 10) {
             this._history.shift();
         }
         this._history.push(cmd);
