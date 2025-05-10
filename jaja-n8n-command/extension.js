@@ -21,10 +21,9 @@ export default class Extension {
         this._connectionStatus = false;
         this._connectionCheckId = 0;
         this._lastNotifyStatus = null;
-        this._entry = null; // Добавляем ссылку на поле ввода
+        this._entry = null;
     }
 
-    // Загрузка настроек из GSettings
     _loadSettings() {
         try {
             const schemaDir = Gio.File.new_for_path(`${this._meta.path}/schemas`);
@@ -42,7 +41,6 @@ export default class Extension {
         }
     }
 
-    // Инициализация и запуск расширения
     enable() {
         if (!this._loadSettings()) {
             console.error('Не удалось загрузить настройки, расширение отключено');
@@ -50,11 +48,7 @@ export default class Extension {
         }
 
         this._indicator = new PanelMenu.Button(0.0, 'n8n Command', false);
-        
-        // Инициализация иконки
         this._updateStatusIcon();
-        
-        // Запуск периодической проверки соединения
         this._startConnectionChecker();
 
         const container = new PopupMenu.PopupBaseMenuItem({ reactive: false });
@@ -96,12 +90,11 @@ export default class Extension {
         });
     }
 
-    // Запуск периодической проверки соединения
     _startConnectionChecker() {
         this._checkConnection().then(() => {
             this._connectionCheckId = GLib.timeout_add(
                 GLib.PRIORITY_DEFAULT,
-                90000, // 90 секунд
+                90000,
                 () => {
                     this._checkConnection();
                     return GLib.SOURCE_CONTINUE;
@@ -110,7 +103,6 @@ export default class Extension {
         });
     }
 
-    // Обновление иконки статуса
     async _updateStatusIcon() {
         const isConnected = await this._checkConnection();
         const iconName = isConnected ? 'connect.png' : 'disconnect.png';
@@ -129,7 +121,6 @@ export default class Extension {
         this._indicator.add_child(this._icon);
     }
 
-    // Проверка соединения с n8n
     async _checkConnection() {
         const url = this._settings.get_string('n8n-url');
         if (!url) return false;
@@ -138,7 +129,6 @@ export default class Extension {
             const [success] = await this._executeCommand(`curl -s -o /dev/null -w "%{http_code}" ${url}/health`);
             const isConnected = success === '200';
             
-            // Уведомление только при изменении статуса
             if (this._connectionStatus !== isConnected) {
                 if (isConnected) {
                     Main.notify('JAJA n8n', 'Соединение с n8n восстановлено');
@@ -160,7 +150,6 @@ export default class Extension {
         }
     }
 
-    // Обновление стиля кнопки
     _updateButtonStyle(button) {
         const color = this._settings.get_string('button-color');
         button.style = `
@@ -172,7 +161,6 @@ export default class Extension {
         `;
     }
 
-    // Добавление команды в историю (максимум 5)
     _addToHistory(cmd) {
         if (this._history.length >= 5) {
             this._history.shift();
@@ -180,24 +168,19 @@ export default class Extension {
         this._history.push(cmd);
     }
 
-    // Обновление меню истории
     _updateHistoryMenu(menu) {
         menu.menu.removeAll();
         this._history.slice().reverse().forEach(cmd => {
             const item = new PopupMenu.PopupMenuItem(cmd);
             item.connect('activate', () => {
-                // Вставляем команду в поле ввода
                 this._entry.set_text(cmd);
                 this._entry.grab_key_focus();
-                
-                // Автоматически отправляем команду
                 this._sendCommand(this._entry);
             });
             menu.menu.addMenuItem(item);
         });
     }
 
-    // Отправка команды в n8n
     async _sendCommand(entry) {
         const text = entry.get_text().trim();
         if (!text) return;
@@ -223,7 +206,6 @@ export default class Extension {
         }
     }
 
-    // Выполнение shell-команд
     _executeCommand(command) {
         return new Promise((resolve) => {
             const proc = Gio.Subprocess.new(
@@ -233,7 +215,8 @@ export default class Extension {
             proc.communicate_utf8_async(null, null, (proc, res) => {
                 try {
                     const [, out, err] = proc.communicate_utf8_finish(res);
-                    resolve([proc.get_success(), out.trim() || err.trim()]);
+                    // Исправлено: get_succes → get_success
+                    resolve([proc.get_exit_status() === 0, out.trim() || err.trim()]);
                 } catch (e) {
                     resolve([false, e.message]);
                 }
@@ -241,7 +224,6 @@ export default class Extension {
         });
     }
 
-    // Отключение расширения
     disable() {
         if (this._connectionCheckId) {
             GLib.Source.remove(this._connectionCheckId);
