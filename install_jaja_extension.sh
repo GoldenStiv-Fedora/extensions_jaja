@@ -144,9 +144,9 @@ function install_extension {
     fi
     
     # Проверяем наличие иконок
-    if [ ! -f "$EXTENSION_DIR/connect.png" ] || [ ! -f "$EXTENSION_DIR/disconnect.png" ]; then
-        message warning "Иконки connect.png и/или disconnect.png не найдены в $EXTENSION_DIR"
-        message info "Пожалуйста, добавьте их вручную для корректного отображения статуса"
+    if [ ! -f "$EXTENSION_DIR/connect.png" ]; then
+        message warning "Иконка connect.png не найдена в $EXTENSION_DIR"
+        message info "Пожалуйста, добавьте вручную"
     fi
     
     # Устанавливаем правильные разрешения
