@@ -1,11 +1,21 @@
-// 🧠 JAJA N8N COMMAND EXTENSION v1.2
-// ФАЙЛ: prefs.js — настройки расширения GNOME
-// НАЗНАЧЕНИЕ: Обработка пользовательских настроек расширения
+// 🧠 JAJA N8N COMMAND EXTENSION v1.3
+// ФАЙЛ: prefs.js
+// НАЗНАЧЕНИЕ: Окно настроек расширения
+// ОСОБЕННОСТИ:
+// - Настройка URL вебхука n8n
+// - Включение/отключение отправки по Enter
+// - Выбор цвета кнопки
+// - Управление уведомлениями
 
 import Gtk from 'gi://Gtk';
 import Gio from 'gi://Gio';
 import Adw from 'gi://Adw';
 
+/**
+ * Получение объекта настроек
+ * @returns {Gio.Settings} Объект настроек
+ * @throws {Error} Если схема настроек не найдена
+ */
 function getSettings() {
     const schemaDir = Gio.File.new_for_path(import.meta.url.substring(7)).get_parent();
     const schemaSource = Gio.SettingsSchemaSource.new_from_directory(
@@ -36,6 +46,10 @@ export default class JajaPrefs {
         }
     }
 
+    /**
+     * Заполнение окна настроек
+     * @param {Adw.PreferencesWindow} window - Окно настроек
+     */
     fillPreferencesWindow(window) {
         try {
             const page = new Adw.PreferencesPage();
@@ -44,7 +58,7 @@ export default class JajaPrefs {
                 description: 'Конфигурация интеграции с n8n',
             });
 
-            // URL Webhook
+            // Настройка URL вебхука
             const urlRow = new Adw.EntryRow({
                 title: 'n8n Webhook URL',
                 text: this._settings.get_string('n8n-url'),
@@ -54,7 +68,7 @@ export default class JajaPrefs {
             });
             group.add(urlRow);
 
-            // Отправка по Enter
+            // Настройка отправки по Enter
             const enterRow = new Adw.SwitchRow({
                 title: 'Отправка по Enter',
                 subtitle: 'Отправлять команду при нажатии Enter',
@@ -65,7 +79,7 @@ export default class JajaPrefs {
             });
             group.add(enterRow);
 
-            // Цвет кнопки
+            // Настройка цвета кнопки
             const colorRow = new Adw.EntryRow({
                 title: 'Цвет кнопки (HEX)',
                 text: this._settings.get_string('button-color'),
@@ -75,7 +89,7 @@ export default class JajaPrefs {
             });
             group.add(colorRow);
 
-            // Показывать уведомления об отправке
+            // Настройка уведомлений
             const notifyRow = new Adw.SwitchRow({
                 title: 'Уведомления при отправке',
                 subtitle: 'Показывать уведомление при отправке команды',
