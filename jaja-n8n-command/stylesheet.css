@@ -1,5 +1,44 @@
-/* stylesheet.css */
-.system-status-icon {
-    padding: 0px;
-    icon-size: 16px;
+/**
+ * JAJA N8N COMMAND EXTENSION v1.1
+ * ФАЙЛ: stylesheet.css
+ * НАЗНАЧЕНИЕ: Стили для элементов интерфейса расширения
+ * ОСОБЕННОСТИ:
+ * - Стилизация в соответствии с GNOME 47+
+ * - Адаптивные элементы интерфейса
+ */
+
+.n8n-input-box {
+    spacing: 8px;
+    padding: 10px;
+    min-width: 400px;
+}
+
+.n8n-command-entry {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: inherit;
+}
+
+.n8n-send-button, .n8n-test-button {
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.n8n-send-button:hover, .n8n-test-button:hover {
+    opacity: 0.9;
+    transition: all 0.2s;
+}
+
+.n8n-history-item {
+    padding: 6px 12px;
+    border-radius: 4px;
+}
+
+.n8n-history-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
 }
