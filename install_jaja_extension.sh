@@ -1,13 +1,13 @@
 #!/bin/bash
 # Скрипт установки расширений GNOME из репозитория GitHub
-# Версия: 1.1
+# Версия: 1.2
 # Автор: GoldenStiv
 # Для GNOME 47+ (Wayland)
 # Запуск: chmod +x install_jaja_extension.sh && ./install_jaja_extension.sh
 
 # Описание:
 # Этот скрипт автоматически:
-# 1. Проверяет и устанавливает зависимости
+# 1. Проверяет и устанавливает зависимости (включая gnome-extensions-app)
 # 2. Клонирует репозиторий с расширениями
 # 3. Устанавливает расширение jaja-n8n-command
 # 4. Компилирует схемы GSettings
@@ -51,12 +51,30 @@ function check_dependencies {
         message warning "notify-send не найден, графические уведомления недоступны"
     fi
     
+    # Проверяем наличие gnome-extensions-app
+    if ! command -v gnome-extensions &> /dev/null; then
+        message info "gnome-extensions-app не установлен, добавляем в список зависимостей"
+        missing+=("gnome-extensions-app")
+    fi
+    
     # Если есть отсутствующие зависимости
     if [ ${#missing[@]} -gt 0 ]; then
         message error "Отсутствуют необходимые пакеты: ${missing[*]}"
         message info "Установите их командой:"
         message info "sudo dnf install ${missing[*]}"
-        exit 1
+        
+        # Запрашиваем установку
+        read -p "Установить зависимости автоматически? [Y/n]: " answer
+        if [[ "$answer" =~ ^[Nn]$ ]]; then
+            exit 1
+        fi
+        
+        # Устанавливаем зависимости
+        if ! sudo dnf install -y "${missing[@]}"; then
+            message error "Ошибка при установке зависимостей"
+            exit 1
+        fi
+        message success "Зависимости успешно установлены"
     fi
 }
 
@@ -170,7 +188,7 @@ function install_extension {
     message success "Установка завершена успешно!"
     message info "Для активации расширения:"
     message info "1. Перезагрузите GNOME (Alt+F2, введите 'r' и нажмите Enter)"
-    message info "2. Включите расширение в 'Расширения' или через 'gnome-extensions-app'"
+    message info "2. Включите расширение в 'Расширения' (gnome-extensions-app)"
     message info "3. Настройте расширение через 'gnome-extensions-app'"
 }
 
