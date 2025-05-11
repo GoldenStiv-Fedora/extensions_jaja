@@ -7,12 +7,13 @@
 
 # Описание:
 # Этот скрипт автоматически:
-# 1. Проверяет и устанавливает зависимости (включая gnome-extensions-app)
-# 2. Клонирует репозиторий с расширениями
-# 3. Устанавливает расширение jaja-n8n-command
-# 4. Компилирует схемы GSettings
-# 5. Очищает временные файлы
-# 6. Выводит уведомление об успешной установке
+# 1. Проверяет и устанавливает зависимости
+# 2. Устанавливает Extension Manager из Flathub
+# 3. Клонирует репозиторий с расширениями
+# 4. Устанавливает расширение jaja-n8n-command
+# 5. Компилирует схемы GSettings
+# 6. Очищает временные файлы
+# 7. Выводит уведомление об успешной установке
 
 # Конфигурация
 REPO_URL="https://github.com/GoldenStiv-Fedora/extensions_jaja.git"
@@ -46,15 +47,14 @@ function check_dependencies {
         missing+=("git")
     fi
     
+    # Проверяем flatpak
+    if ! command -v flatpak &> /dev/null; then
+        missing+=("flatpak")
+    fi
+    
     # Проверяем notify-send
     if ! command -v notify-send &> /dev/null; then
         message warning "notify-send не найден, графические уведомления недоступны"
-    fi
-    
-    # Проверяем наличие gnome-extensions-app
-    if ! command -v gnome-extensions &> /dev/null; then
-        message info "gnome-extensions-app не установлен, добавляем в список зависимостей"
-        missing+=("gnome-extensions-app")
     fi
     
     # Если есть отсутствующие зависимости
@@ -62,26 +62,29 @@ function check_dependencies {
         message error "Отсутствуют необходимые пакеты: ${missing[*]}"
         message info "Установите их командой:"
         message info "sudo dnf install ${missing[*]}"
-        
-        # Запрашиваем установку
-        read -p "Установить зависимости автоматически? [Y/n]: " answer
-        if [[ "$answer" =~ ^[Nn]$ ]]; then
+        exit 1
+    fi
+}
+
+# Установка Extension Manager
+function install_extension_manager {
+    message info "Проверка наличия Extension Manager..."
+    if ! flatpak list | grep -q "com.mattjakeman.ExtensionManager"; then
+        message info "Установка Extension Manager из Flathub..."
+        flatpak install flathub com.mattjakeman.ExtensionManager -y || {
+            message error "Ошибка при установке Extension Manager"
             exit 1
-        fi
-        
-        # Устанавливаем зависимости
-        if ! sudo dnf install -y "${missing[@]}"; then
-            message error "Ошибка при установке зависимостей"
-            exit 1
-        fi
-        message success "Зависимости успешно установлены"
+        }
+        message success "Extension Manager успешно установлен"
+    else
+        message info "Extension Manager уже установлен"
     fi
 }
 
 # Отправка уведомления
 function send_notification {
     if command -v notify-send &> /dev/null; then
-        notify-send "Установка расширения JAJA" "Расширение $EXTENSION_ID успешно установлено!\nАктивируйте его в приложении 'Расширения'" -i dialog-information
+        notify-send "Установка расширения JAJA" "Расширение $EXTENSION_ID успешно установлено!\nАктивируйте его в Extension Manager" -i dialog-information
     fi
 }
 
@@ -114,6 +117,9 @@ function install_extension {
     
     # Проверяем зависимости
     check_dependencies
+    
+    # Устанавливаем Extension Manager
+    install_extension_manager
     
     # Проверяем существующую установку
     check_existing_installation
@@ -188,8 +194,8 @@ function install_extension {
     message success "Установка завершена успешно!"
     message info "Для активации расширения:"
     message info "1. Перезагрузите GNOME (Alt+F2, введите 'r' и нажмите Enter)"
-    message info "2. Включите расширение в 'Расширения' (gnome-extensions-app)"
-    message info "3. Настройте расширение через 'gnome-extensions-app'"
+    message info "2. Включите расширение в Extension Manager"
+    message info "3. Настройте расширение через Extension Manager"
 }
 
 # Запускаем установку
