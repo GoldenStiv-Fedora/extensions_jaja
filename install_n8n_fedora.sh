@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Запуск: chmod +x install_n8n_fedora.sh && ./install_install_n8n_fedora.sh
+# Запуск: chmod +x install_n8n_fedora.sh && ./install_n8n_fedora.sh
 # n8n installer for Fedora (user-level installation)
 echo "🚀 Начинаем установку n8n для обычного пользователя..."
 
